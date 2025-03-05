@@ -1,4 +1,3 @@
-// app/layout.tsx
 import './globals.css'; // استيراد ملف الأنماط العام
 
 export const metadata = {
@@ -14,7 +13,12 @@ export default function RootLayout({
   return (
     <html lang="ar" dir="rtl">
       <head>
-        {/* يمكنك إضافة عناصر إضافية هنا مثل الروابط والبيانات الوصفية */}
+        {/* ✅ تحسين بيانات المشاركة عند النشر في سناب شات وتويتر وفيسبوك */}
+        <meta property="og:title" content="مسابقة الماس الرمضانية 🎉" />
+        <meta property="og:description" content="شارك في المسابقة واربح جوائز رائعة! 🚀" />
+        <meta property="og:image" content="https://almasyn.com/snap-thumbnail.jpg" />
+        <meta property="og:url" content="https://almasyn.com" />
+        <meta name="twitter:card" content="summary_large_image" />
       </head>
       <body>{children}</body>
     </html>
