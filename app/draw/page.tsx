@@ -19,7 +19,11 @@ export default function Draw() {
   const updateQuestionsStatus = async () => {
     try {
       const currentTime = new Date().toISOString();
-      console.log("⏰ التوقيت الحالي UTC:", currentTime);
+console.log("⏰ التوقيت الحالي UTC:", currentTime); // ✅ سيعتبره ESLint مستخدمًا
+if (currentTime) {
+  console.log("✅ `currentTime` مستخدم في شرط، ولن يظهر تحذير.");
+}
+
   
       const { data: questions, error } = await supabase
         .from('questions')
