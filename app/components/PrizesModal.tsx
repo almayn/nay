@@ -42,6 +42,9 @@ export default function PrizesModal({ show, onClose }: PrizesModalProps) {
           <p className="flex items-center gap-2">
             <FaGift className="text-yellow-500" /> بطاقات شحن
           </p>
+          <p className="flex items-center gap-2">
+            <FaGift className="text-yellow-500" /> ليلة مجانية في شاليهات مودك
+          </p>
         </div>
 
         {/* زر المشاركة */}

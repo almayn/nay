@@ -27,6 +27,7 @@ export default function Home() {
   const [subscriptionNumber, setSubscriptionNumber] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  
 
  
   
@@ -212,8 +213,10 @@ export default function Home() {
               <span className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-md"></span>
             </span>
           </p>
-          <h2 className="text-2xl text-green-600 mt-4 mb-2">رقم المشاركة هو</h2>
-          <p className="text-3xl text-gray-800 mb-4 font-bold">{subscriptionNumber}</p>
+   
+          <p className="text-2xl text-red-500 mt-3 mb-2 font-bold">  السؤال - {question?.id}</p>
+          <h2 className="text-2xl text-green-600 mt-4 mb-2 font-bold">رقم المشاركة هو</h2>
+          <p className="text-3xl text-red-500 mb-4 font-bold">{subscriptionNumber}</p>
           {!showThankYouMessage ? (
             <button
               className="py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition"
@@ -239,8 +242,10 @@ export default function Home() {
             <p className="text-green-600 font-bold text-lg">
               شكراً لمشاركتك.. تابع الماس لمعرفة النتيجة
             </p>
-            
+                      
           )}
+          <p className="text-2xl text-red-600 mt-4 mb-2 font-bold">تنبيه.. تكرار المشاركة  يقلل فرص الفوز</p>
+
         </>
       ) : (
         question && (
@@ -349,7 +354,7 @@ export default function Home() {
     className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition flex items-center gap-2 shadow-md w-32 justify-center"
   >
     <FaSnapchat size={24} />
-    <span>تابعنا</span>
+    <span>  ارسلها لنا </span>
   </button>
 
   {/* زر المشاركة العامة */}
