@@ -1,12 +1,9 @@
-// app/page.tsx
 'use client';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import Image from 'next/image';
 import { FaSnapchat, FaShareAlt } from 'react-icons/fa';
 import PrizesModal from './components/PrizesModal';
-
-
 
 export default function Home() {
   interface Question {
@@ -27,46 +24,43 @@ export default function Home() {
   const [subscriptionNumber, setSubscriptionNumber] = useState<number | null>(null);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  
 
- 
-  
   // جلب السؤال عند تحميل الصفحة
   useEffect(() => {
     const fetchQuestion = async () => {
       try {
         setLoading(true);
-  
+
         // ✅ الحصول على الوقت الحالي بدون إضافة 3 ساعات
         const currentDate = new Date();
         const formattedDate = currentDate.toISOString().slice(0, 19).replace('T', ' ');
         console.log('⏳ التوقيت الحالي:', formattedDate);
-  
+
         // ✅ جلب جميع الأسئلة
         const { data: questions, error: fetchError } = await supabase
           .from('questions')
           .select('*')
           .order('start_date', { ascending: true }); // ترتيب حسب وقت النشر
-  
+
         if (fetchError) {
           console.error('❌ Supabase Error:', JSON.stringify(fetchError, null, 2));
           throw fetchError;
         }
-  
+
         console.log('📌 الأسئلة المتاحة:', questions);
-  
+
         if (!questions || questions.length === 0) {
           setError('⚠️ لا يوجد أسئلة متاحة حالياً.');
           return;
         }
-  
+
         // ✅ البحث عن السؤال الذي يوافق الوقت الحالي
         const currentQuestion = questions.find((q) => {
           const startDate = new Date(q.start_date);
           const closeDate = new Date(q.close_date);
           return currentDate >= startDate && currentDate <= closeDate; // الوقت الحالي بين start_date و close_date
         });
-  
+
         if (currentQuestion) {
           setQuestion(currentQuestion); // ✅ تحديد السؤال الحالي
         } else {
@@ -75,7 +69,7 @@ export default function Home() {
             const startDate = new Date(q.start_date);
             return currentDate < startDate; // السؤال الذي لم يبدأ بعد
           });
-  
+
           if (nextQuestion) {
             const startDate = new Date(nextQuestion.start_date);
             setError(`⚠️ السؤال التالي سيتم نشره في ${startDate.toLocaleString('ar-SA')}.`);
@@ -90,10 +84,9 @@ export default function Home() {
         setLoading(false);
       }
     };
-  
+
     fetchQuestion();
   }, []);
-
 
   // اختيار الإجابة
   const handleAnswer = (answer: string) => {
@@ -102,64 +95,69 @@ export default function Home() {
   };
 
   // إرسال البيانات إلى Supabase
- // إرسال البيانات إلى Supabase مع التأكد من عدم تكرار الرقم
- const handleSubmit = async () => {
-  if (!name || !city || !selectedAnswer) {
-    setErrorMessage('يرجى ملء جميع الحقول واختيار إجابة.');
-    return;
-  }
+  const handleSubmit = async () => {
+    // نافذة تأكيد قبل الإرسال
+    const isConfirmed = window.confirm('هل أنت متأكد من إرسال إجابتك؟');
+    if (!isConfirmed) {
+      return; // إذا تم الإلغاء، لا يتم الإرسال
+    }
 
-  try {
-    // 🔹 جلب رقم السؤال الحالي
-    if (!question) {
-      setErrorMessage('❌ لا يوجد سؤال متاح حالياً.');
+    if (!name || !city || !selectedAnswer) {
+      setErrorMessage('يرجى ملء جميع الحقول واختيار إجابة.');
       return;
     }
 
-    const questionId = question.id; // 🔹 رقم السؤال الحالي
-
-    let number;
-    let isUnique = false;
-
-    // توليد رقم اشتراك فريد والتحقق من عدم تكراره
-    do {
-      number = Math.floor(1000 + Math.random() * 9000);
-      const { data, error } = await supabase
-        .from('participants')
-        .select('subscription_number')
-        .eq('subscription_number', number);
-
-      if (error) {
-        console.error('❌ خطأ أثناء التحقق من الرقم:', error);
-        throw new Error('❌ حدث خطأ أثناء التحقق من الرقم.');
+    try {
+      // 🔹 جلب رقم السؤال الحالي
+      if (!question) {
+        setErrorMessage('❌ لا يوجد سؤال متاح حالياً.');
+        return;
       }
 
-      isUnique = data.length === 0;
-    } while (!isUnique);
+      const questionId = question.id; // 🔹 رقم السؤال الحالي
 
-    // 🔹 إدراج بيانات المتسابق مع `question_id`
-    const { error: insertError } = await supabase.from('participants').insert([
-      {
-        name,
-        city,
-        answer: selectedAnswer,
-        subscription_number: number,
-        question_id: questionId, // ✅ ربط المتسابق بالسؤال الصحيح
-      },
-    ]);
+      let number;
+      let isUnique = false;
 
-    if (insertError) {
-      console.error('❌ خطأ أثناء تسجيل المشاركة:', insertError);
-      throw new Error('❌ حدث خطأ أثناء تسجيل المشاركة.');
+      // توليد رقم اشتراك فريد والتحقق من عدم تكراره
+      do {
+        number = Math.floor(1000 + Math.random() * 9000);
+        const { data, error } = await supabase
+          .from('participants')
+          .select('subscription_number')
+          .eq('subscription_number', number);
+
+        if (error) {
+          console.error('❌ خطأ أثناء التحقق من الرقم:', error);
+          throw new Error('❌ حدث خطأ أثناء التحقق من الرقم.');
+        }
+
+        isUnique = data.length === 0;
+      } while (!isUnique);
+
+      // 🔹 إدراج بيانات المتسابق مع `question_id`
+      const { error: insertError } = await supabase.from('participants').insert([
+        {
+          name,
+          city,
+          answer: selectedAnswer,
+          subscription_number: number,
+          question_id: questionId, // ✅ ربط المتسابق بالسؤال الصحيح
+        },
+      ]);
+
+      if (insertError) {
+        console.error('❌ خطأ أثناء تسجيل المشاركة:', insertError);
+        throw new Error('❌ حدث خطأ أثناء تسجيل المشاركة.');
+      }
+
+      setSubscriptionNumber(number);
+      setIsSubmitted(true);
+    } catch (err) {
+      console.error('❌ خطأ أثناء إرسال البيانات:', JSON.stringify(err, null, 2));
+      setErrorMessage('❌ حدث خطأ أثناء إرسال البيانات.');
     }
-
-    setSubscriptionNumber(number);
-    setIsSubmitted(true);
-  } catch (err) {
-    console.error('❌ خطأ أثناء إرسال البيانات:', JSON.stringify(err, null, 2));
-    setErrorMessage('❌ حدث خطأ أثناء إرسال البيانات.');
-  }
-};
+  };
 
   // الحصول على التاريخ الميلادي واسم اليوم
   const getFormattedDate = () => {
@@ -213,7 +211,7 @@ export default function Home() {
               <span className="absolute bottom-0 left-0 w-full h-1 bg-yellow-400 rounded-md"></span>
             </span>
           </p>
-   
+
           <p className="text-2xl text-red-500 mt-3 mb-2 font-bold">  السؤال - {question?.id}</p>
           <h2 className="text-2xl text-green-600 mt-4 mb-2 font-bold">رقم المشاركة هو</h2>
           <p className="text-3xl text-red-500 mb-4 font-bold">{subscriptionNumber}</p>
@@ -237,38 +235,31 @@ export default function Home() {
             >
               نسخ الرقم
             </button>
-            
           ) : (
             <p className="text-green-600 font-bold text-lg">
               شكراً لمشاركتك.. تابع الماس لمعرفة النتيجة
             </p>
-                      
           )}
           <p className="text-2xl text-red-600 mt-4 mb-2 font-bold">تنبيه.. تكرار المشاركة  يقلل فرص الفوز</p>
-
         </>
       ) : (
         question && (
           <>
             {/* معلومات السؤال */}
             <div
-  className="mb-4 text-center p-3 bg-gray-100 rounded-lg flex items-center justify-center"
-  style={{ fontSize: '1.1rem' }}
->
-  {/* إحاطة رقم السؤال بدائرة أصغر */}
-  <span
-    className="inline-flex items-center justify-center w-8 h-8 bg-white border border-blue-500 rounded-full text-blue-500 font-bold"
-    style={{ fontSize: '1rem', marginLeft: '10px' }} // مسافة يدوية بين الدائرة والتاريخ
-  >
-    {question.id}
-  </span>
-  {/* التاريخ مع مسافة فاصلة أكبر */}
-  <span className="text-gray-600">{getFormattedDate()}</span>
-</div>
-
-
-
-
+              className="mb-4 text-center p-3 bg-gray-100 rounded-lg flex items-center justify-center"
+              style={{ fontSize: '1.1rem' }}
+            >
+              {/* إحاطة رقم السؤال بدائرة أصغر */}
+              <span
+                className="inline-flex items-center justify-center w-8 h-8 bg-white border border-blue-500 rounded-full text-blue-500 font-bold"
+                style={{ fontSize: '1rem', marginLeft: '10px' }} // مسافة يدوية بين الدائرة والتاريخ
+              >
+                {question.id}
+              </span>
+              {/* التاريخ مع مسافة فاصلة أكبر */}
+              <span className="text-gray-600">{getFormattedDate()}</span>
+            </div>
 
             {/* السؤال */}
             <h2 className="text-2xl text-blue-800 my-6 font-bold">{question.question}</h2>
@@ -280,9 +271,7 @@ export default function Home() {
                   key={index}
                   className={`w-full py-3 px-6 font-semibold rounded transition ${
                     selectedAnswer === option
-                      ? question.correct_option === option
-                        ? 'bg-green-500 text-white'
-                        : 'bg-red-500 text-white'
+                      ? 'bg-green-600 text-white' // تغيير اللون إلى الأصفر عند النقر
                       : 'bg-gray-500 text-white hover:bg-gray-600'
                   }`}
                   onClick={() => handleAnswer(option)}
@@ -292,44 +281,42 @@ export default function Home() {
               ))}
             </div>
 
-{/* حقول الإدخال بتصميم جانبي مع إحاطة العنوان */}
-<div className="mt-6 space-y-4 text-right">
-  {/* حقل الاسم */}
-  <div className="flex items-center gap-2">
-    <label
-      htmlFor="name"
-      className="text-md font-semibold text-gray-700 bg-gray-200 border border-gray-300 rounded px-2 py-1"
-    >
-      اسمك:
-    </label>
-    <input
-      id="name"
-      type="text"
-      value={name}
-      onChange={(e) => setName(e.target.value)}
-      className="flex-1 py-2 px-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  </div>
+            {/* حقول الإدخال بتصميم جانبي مع إحاطة العنوان */}
+            <div className="mt-6 space-y-4 text-right">
+              {/* حقل الاسم */}
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="name"
+                  className="text-md font-semibold text-gray-700 bg-gray-200 border border-gray-300 rounded px-2 py-1"
+                >
+                  اسمك:
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="flex-1 py-2 px-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
 
-  {/* حقل المدينة */}
-  <div className="flex items-center gap-2">
-    <label
-      htmlFor="city"
-      className="text-md font-semibold text-gray-700 bg-gray-200 border border-gray-300 rounded px-2 py-1"
-    >
-      المدينة:
-    </label>
-    <input
-      id="city"
-      type="text"
-      value={city}
-      onChange={(e) => setCity(e.target.value)}
-      className="flex-1 py-2 px-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-    />
-  </div>
-</div>
-
-
+              {/* حقل المدينة */}
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="city"
+                  className="text-md font-semibold text-gray-700 bg-gray-200 border border-gray-300 rounded px-2 py-1"
+                >
+                  المدينة:
+                </label>
+                <input
+                  id="city"
+                  type="text"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  className="flex-1 py-2 px-4 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+              </div>
+            </div>
 
             {/* رسالة الخطأ */}
             {errorMessage && <p className="text-red-500 mt-4">{errorMessage}</p>}
@@ -344,52 +331,51 @@ export default function Home() {
           </>
         )
       )}
-{/* أزرار المشاركة */}
-<div className="flex justify-center gap-4 mt-6">
-  {/* زر متابعة سناب شات */}
-  <button
-    onClick={() => {
-      window.open('https://www.snapchat.com/add/almayn', '_blank');
-    }}
-    className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition flex items-center gap-2 shadow-md w-32 justify-center"
-  >
-    <FaSnapchat size={24} />
-    <span>  ارسلها لنا </span>
-  </button>
 
-  {/* زر المشاركة العامة */}
-  <button
-    onClick={() => {
-      const urlToShare = window.location.href;
-      if (navigator.share) {
-        navigator
-          .share({ title: 'شارك هذه الصفحة', url: urlToShare })
-          .catch((err) => console.error('خطأ في المشاركة:', err));
-      } else {
-        alert('المشاركة غير مدعومة في هذا المتصفح.');
-      }
-    }}
-    className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition flex items-center gap-2 shadow-md w-32 justify-center"
-  >
-    <FaShareAlt size={24} />
-    <span>شارك</span>
-  </button>
+      {/* أزرار المشاركة */}
+      <div className="flex justify-center gap-4 mt-6">
+        {/* زر متابعة سناب شات */}
+        <button
+          onClick={() => {
+            window.open('https://www.snapchat.com/add/almayn', '_blank');
+          }}
+          className="bg-yellow-400 text-black px-4 py-2 rounded-md hover:bg-yellow-500 transition flex items-center gap-2 shadow-md w-32 justify-center"
+        >
+          <FaSnapchat size={24} />
+          <span>  ارسلها لنا </span>
+        </button>
 
-  {/* زر الجوائز */}
-  <button
-    onClick={() => setShowPrizes(true)}
-    className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition flex items-center gap-2 shadow-md w-32 justify-center"
-  >
-    🎁 الجوائز
-  </button>
+        {/* زر المشاركة العامة */}
+        <button
+          onClick={() => {
+            const urlToShare = window.location.href;
+            if (navigator.share) {
+              navigator
+                .share({ title: 'شارك هذه الصفحة', url: urlToShare })
+                .catch((err) => console.error('خطأ في المشاركة:', err));
+            } else {
+              alert('المشاركة غير مدعومة في هذا المتصفح.');
+            }
+          }}
+          className="bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition flex items-center gap-2 shadow-md w-32 justify-center"
+        >
+          <FaShareAlt size={24} />
+          <span>شارك</span>
+        </button>
 
-  {/* عرض النافذة فقط عند الحاجة */}
-  {showPrizes && (
-    <PrizesModal show={showPrizes} onClose={() => setShowPrizes(false)} />
-  )}
-</div>
+        {/* زر الجوائز */}
+        <button
+          onClick={() => setShowPrizes(true)}
+          className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600 transition flex items-center gap-2 shadow-md w-32 justify-center"
+        >
+          🎁 الجوائز
+        </button>
 
-
+        {/* عرض النافذة فقط عند الحاجة */}
+        {showPrizes && (
+          <PrizesModal show={showPrizes} onClose={() => setShowPrizes(false)} />
+        )}
+      </div>
 
       {/* Footer - رابط صفحة سياسة الخصوصية */}
       <footer className="mt-8 text-sm text-gray-500">
