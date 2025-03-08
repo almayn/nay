@@ -96,11 +96,7 @@ export default function Home() {
 
   // إرسال البيانات إلى Supabase
   const handleSubmit = async () => {
-    // نافذة تأكيد قبل الإرسال
-    const isConfirmed = window.confirm('هل أنت متأكد من إرسال إجابتك؟');
-    if (!isConfirmed) {
-      return; // إذا تم الإلغاء، لا يتم الإرسال
-    }
+   
 
     if (!name || !city || !selectedAnswer) {
       setErrorMessage('يرجى ملء جميع الحقول واختيار إجابة.');
