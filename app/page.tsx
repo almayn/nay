@@ -1,5 +1,4 @@
 'use client';
-import { useState, useEffect } from 'react';
 import { FaSpinner } from 'react-icons/fa'; // أيقونة الدوران
 
 export default function Home() {
